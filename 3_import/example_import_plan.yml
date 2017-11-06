@@ -1,0 +1,27 @@
+---
+- id: aa
+  action: find-farm
+  params:
+    envId: '2'
+  query:
+    name: import-test
+  outputs:
+    - name: farmid
+      location: id
+- id: ab
+  action: find-farm-role
+  params:
+    envId: '2'
+    farmId: "$ref/aa/farmid"
+  query:
+    alias: SystemImage-Ubuntu1604
+  outputs:
+    - name: farmroleid
+      location: id
+- id: ac
+  action: import-server
+  params:
+    envId: '2'
+    farmRoleId: "$ref/ab/farmroleid"
+  body:
+    cloudServerId: 'i-0f9c78d09fee1b456'
