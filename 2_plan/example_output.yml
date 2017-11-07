@@ -1,0 +1,76 @@
+- action: find-farm
+  id: '000001'
+  outputs:
+  - location: id
+    name: farmid
+  params:
+    envId: '2'
+  query:
+    name: Other App
+- action: find-farm
+  id: '000002'
+  outputs:
+  - location: id
+    name: farmid
+  params:
+    envId: '2'
+  query:
+    name: Business App
+- action: find-farm-role
+  id: '000003'
+  outputs:
+  - location: id
+    name: farmroleid
+  params:
+    envId: '2'
+    farmId: $ref/000002/farmid
+  query:
+    alias: backend
+- action: find-farm-role
+  id: '000004'
+  outputs:
+  - location: id
+    name: farmroleid
+  params:
+    envId: '2'
+    farmId: $ref/000002/farmid
+  query:
+    alias: frontend
+- action: find-farm-role
+  id: '000005'
+  outputs:
+  - location: id
+    name: farmroleid
+  params:
+    envId: '2'
+    farmId: $ref/000001/farmid
+  query:
+    alias: frontend
+- action: import-server
+  body:
+    cloudServerId: i-12345678
+  id: '000006'
+  params:
+    envId: '2'
+    farmRoleId: $ref/000003/farmroleid
+- action: import-server
+  body:
+    cloudServerId: i-23456789
+  id: '000007'
+  params:
+    envId: '2'
+    farmRoleId: $ref/000004/farmroleid
+- action: import-server
+  body:
+    cloudServerId: i-azertyui
+  id: 000008
+  params:
+    envId: '2'
+    farmRoleId: $ref/000003/farmroleid
+- action: import-server
+  body:
+    cloudServerId: i-qsdfghjk
+  id: 000009
+  params:
+    envId: '2'
+    farmRoleId: $ref/000005/farmroleid
