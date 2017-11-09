@@ -65,7 +65,7 @@ def server_import_step(server_id, parent_farm_role_step_id, env_id):
     }
 
 
-def make_coupang_plan(data, envId):
+def make_simple_plan(data, envId):
     # Assumption: col 1 is server ID, col 2 is farm name, col 3 is farm role alias
     farms = set([l[1] for l in data])
     farm_roles = {} # farm name -> list of farm role aliases
@@ -110,7 +110,7 @@ def main(args):
     with open(args.source, newline='') as source_file:
         reader = csv.reader(source_file)
         data = [l for l in reader]
-    plan = make_coupang_plan(data, args.environment)
+    plan = make_simple_plan(data, args.environment)
     write_plan(plan, args.output)
     print('Created import plan with {} steps.'.format(len(plan)))
 
