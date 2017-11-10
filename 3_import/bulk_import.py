@@ -36,8 +36,24 @@ actions = {
         'skip-on-dry-run': True,
         'method': 'post',
         'url': '/api/v1beta0/user/{envId}/farm-roles/{farmRoleId}/actions/import-server/'
+    },
+    'create-farm': {
+        'skip-on-dry-run': True,
+        'method': 'post',
+        'url': '/api/v1beta0/user/{envId}/farms/'
+    },
+    'create-farm-role': {
+        'skip-on-dry-run': True,
+        'method': 'post',
+        'url': '/api/v1beta0/user/{envId}/farms/{farmId}/farm-roles/'
+    },
+    'launch-farm': {
+        'skip-on-dry-run': True,
+        'method': 'post',
+        'url': '/api/v1beta0/user/{envId}/farms/{farmId}/actions/launch/'
     }
 }
+
 
 class ScalrApiClient(object):
     def __init__(self, api_url, key_id, key_secret):
@@ -137,8 +153,17 @@ class ScalrApiSession(requests.Session):
 # Works on dicts of (dicts of () or strings) or strings only
 def resolve_references(d, outputs):
     if isinstance(d, collections.MutableMapping):
+        # Dict
         for k, v in d.items():
             d[k] = resolve_references(v, outputs)
+        return d
+    elif isinstance(d, collections.MutableSequence):
+        # List
+        for i, v in enumerate(d):
+            d[i] = resolve_references(v, outputs)
+        return d
+    elif isinstance(d, int):
+        # Integer, for role IDs mostly
         return d
     else:
         if d.startswith('$ref/'):
@@ -155,6 +180,7 @@ def save_outputs(step, data, outputs):
     if not 'outputs' in step:
         return
     for o in step['outputs']:
+        # TODO Allow to get values not only from the top level...
         value = data[o['location']]
         logging.info('Saving output %s for step %s: %s', o['name'], step['id'], value)
         if not step['id'] in outputs:
@@ -175,12 +201,12 @@ def process_step(step, client, outputs, outputs_file_name):
     if dry_run and action['skip-on-dry-run']:
         logging.info('Dry run: skipping action %s (%s)', step['id'], step['action'])
         logging.info('Would have queried: %s body: %s', full_url, body)
-        return True     #Success
-    
+        return True     # Success
+
     if action['method'] == 'list':
         data = client.list(full_url)
         if len(data) != 1:
-            logging.error('List operation in step %s returned more than one result', step['id'])
+            logging.error('List operation in step %s returned {} results (expected 1)', step['id'], len(data))
             return False
         data = data[0]
     elif action['method'] == 'post':

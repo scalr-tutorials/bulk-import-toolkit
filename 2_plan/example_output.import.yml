@@ -1,0 +1,100 @@
+- action: find-farm
+  id: 000009
+  outputs:
+  - location: id
+    name: farmid
+  params:
+    envId: '2'
+  query:
+    name: import-test-2
+- action: find-farm
+  id: '000010'
+  outputs:
+  - location: id
+    name: farmid
+  params:
+    envId: '2'
+  query:
+    name: import-test-1
+- action: find-farm-role
+  id: '000011'
+  outputs:
+  - location: id
+    name: farmroleid
+  params:
+    envId: '2'
+    farmId: $ref/000010/farmid
+  query:
+    alias: backend-farm-role
+- action: find-farm-role
+  id: '000012'
+  outputs:
+  - location: id
+    name: farmroleid
+  params:
+    envId: '2'
+    farmId: $ref/000010/farmid
+  query:
+    alias: frontend
+- action: find-farm-role
+  id: '000013'
+  outputs:
+  - location: id
+    name: farmroleid
+  params:
+    envId: '2'
+    farmId: $ref/000009/farmid
+  query:
+    alias: fr1
+- action: find-farm-role
+  id: '000014'
+  outputs:
+  - location: id
+    name: farmroleid
+  params:
+    envId: '2'
+    farmId: $ref/000009/farmid
+  query:
+    alias: fr2
+- action: import-server
+  body:
+    cloudServerId: i-05b541207755e5a77
+  id: '000015'
+  params:
+    envId: '2'
+    farmRoleId: $ref/000011/farmroleid
+- action: import-server
+  body:
+    cloudServerId: i-028579e404afea82e
+  id: '000016'
+  params:
+    envId: '2'
+    farmRoleId: $ref/000011/farmroleid
+- action: import-server
+  body:
+    cloudServerId: i-07635c9c553d6ac9f
+  id: '000017'
+  params:
+    envId: '2'
+    farmRoleId: $ref/000012/farmroleid
+- action: import-server
+  body:
+    cloudServerId: i-0a9d50cb4a4adf13e
+  id: 000018
+  params:
+    envId: '2'
+    farmRoleId: $ref/000013/farmroleid
+- action: import-server
+  body:
+    cloudServerId: i-0b24e4215ac7dcad6
+  id: 000019
+  params:
+    envId: '2'
+    farmRoleId: $ref/000014/farmroleid
+- action: import-server
+  body:
+    cloudServerId: i-0d011e3d48e8619a9
+  id: '000020'
+  params:
+    envId: '2'
+    farmRoleId: $ref/000014/farmroleid

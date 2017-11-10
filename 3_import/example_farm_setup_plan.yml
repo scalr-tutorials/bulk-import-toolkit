@@ -1,0 +1,44 @@
+---
+- id: '01'
+  action: create-farm
+  params:
+    envId: '2'
+  body:
+    name: test-auto-import-farm
+    project:
+      id: 30c59dba-fc9b-4d0f-83ec-4b5043b12f72
+  outputs:
+    - location: id
+      name: farmid
+- id: '02'
+  action: create-farm-role
+  params:
+    envId: '2'
+    farmId: '$ref/01/farmid'
+  body:
+    alias: farm-role-1
+    cloudPlatform: ec2
+    cloudLocation: eu-west-1
+    instanceType:
+      id: m3.medium
+    networking:
+      networks:
+        - id: vpc-c442fba0
+      subnets:
+        - id: subnet-9c60f4ea
+        - id: subnet-27892d7f
+        - id: subnet-8d143ae9
+        - id: subnet-4e09932a
+    role:
+      id: '83240'
+    security:
+      securityGroups:
+        - id: sg-c1f92fa7
+  outputs:
+    - location: id
+      name: farmroleid
+- id: '03'
+  action: 'launch-farm'
+  params:
+    envId: '2'
+    farmId: '$ref/01/farmid'
