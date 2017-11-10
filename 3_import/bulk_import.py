@@ -206,7 +206,7 @@ def process_step(step, client, outputs, outputs_file_name):
     if action['method'] == 'list':
         data = client.list(full_url)
         if len(data) != 1:
-            logging.error('List operation in step %s returned {} results (expected 1)', step['id'], len(data))
+            logging.error('List operation in step %s returned %d results (expected 1)', step['id'], len(data))
             return False
         data = data[0]
     elif action['method'] == 'post':
