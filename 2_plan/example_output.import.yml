@@ -58,7 +58,7 @@
     alias: fr2
 - action: import-server
   body:
-    cloudServerId: i-05b541207755e5a77
+    cloudServerId: i-05b541207755e5aze
   id: '000015'
   params:
     envId: '2'

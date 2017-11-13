@@ -1,6 +1,7 @@
-i-05b541207755e5a77,import-test-1,backend-farm-role,eu-west-1,m3.medium,vpc-c442fba0,subnet-9c60f4ea,83240,sg-c1f92fa7 sg-b3e731d5,30c59dba-fc9b-4d0f-83ec-4b5043b12f72
-i-028579e404afea82e,import-test-1,backend-farm-role,eu-west-1,m3.medium,vpc-c442fba0,subnet-27892d7f,83240,sg-c1f92fa7 sg-b3e731d5,30c59dba-fc9b-4d0f-83ec-4b5043b12f72
-i-07635c9c553d6ac9f,import-test-1,frontend,eu-west-1,m3.medium,vpc-c442fba0,subnet-9c60f4ea,83240,sg-c1f92fa7 sg-b3e731d5,30c59dba-fc9b-4d0f-83ec-4b5043b12f72
-i-0a9d50cb4a4adf13e,import-test-2,fr1,eu-west-1,m3.medium,vpc-c442fba0,subnet-9c60f4ea,83240,sg-c1f92fa7 sg-b3e731d5,30c59dba-fc9b-4d0f-83ec-4b5043b12f72
-i-0b24e4215ac7dcad6,import-test-2,fr2,eu-west-1,m3.medium,vpc-c442fba0,subnet-9c60f4ea,83240,sg-c1f92fa7 sg-b3e731d5,30c59dba-fc9b-4d0f-83ec-4b5043b12f72
-i-0d011e3d48e8619a9,import-test-2,fr2,eu-west-1,m3.medium,vpc-c442fba0,subnet-8d143ae9,83240,sg-c1f92fa7 sg-b3e731d5,30c59dba-fc9b-4d0f-83ec-4b5043b12f72
+i-056e87b0015688608,Farm 1,Farm-Role-1,eu-west-1,m3.medium,vpc-c442fba0,subnet-8d143ae9,83240,sg-c1f92fa7 sg-b3e731d5,30c59dba-fc9b-4d0f-83ec-4b5043b12f72
+i-0a6e3d46fd1d29248,Farm 1,Farm-Role-1,eu-west-1,m3.medium,vpc-c442fba0,subnet-9c60f4ea,83240,sg-c1f92fa7 sg-b3e731d5,30c59dba-fc9b-4d0f-83ec-4b5043b12f72
+i-0e7c0b5c6910d0631,Farm 2,Farm-Role-2,eu-west-1,m3.medium,vpc-c442fba0,subnet-9c60f4ea,83240,sg-c1f92fa7 sg-b3e731d5,30c59dba-fc9b-4d0f-83ec-4b5043b12f72
+i-04411579e0ed3be14,Farm 2,farm-role-2,us-east-1,m3.medium,vpc-cd8134aa,subnet-c0b0e0ea,83240,sg-bdefefc6,30c59dba-fc9b-4d0f-83ec-4b5043b12f72
+i-01f48523998291e1c,Farm 1,farm-role-2,us-west-1,m3.medium,vpc-9483dcf1,subnet-d7c5988e,83240,sg-0db1ed6a,30c59dba-fc9b-4d0f-83ec-4b5043b12f72
+i-085504fe4ccbaa57f,Farm 2,farm-role-1,us-west-1,m3.medium,vpc-9483dcf1,subnet-d7c5988e,83240,sg-0db1ed6a,30c59dba-fc9b-4d0f-83ec-4b5043b12f72
+i-0a35bf3ef4a550f54,Farm 1,farm-role-2,us-west-1,m3.medium,vpc-9483dcf1,subnet-d7c5988e,83240,sg-0db1ed6a,30c59dba-fc9b-4d0f-83ec-4b5043b12f72
