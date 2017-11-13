@@ -23,6 +23,10 @@ def main(args):
     scalr_client.admin_login_as(args.account)
     servers = scalr_client.get_servers_for_import(args.location)
     # Step 2 : get more info on these servers from EC2
+    print(servers)
+    client = boto3.client('ec2')
+    for s in servers:
+        pass
 
 
 if __name__ == '__main__':
