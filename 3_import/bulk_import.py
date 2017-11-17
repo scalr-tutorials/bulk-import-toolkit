@@ -55,6 +55,37 @@ actions = {
 }
 
 
+def query_yes_no(question, default='yes'):
+    """Ask a yes/no question via raw_input() and return their answer.
+
+    'question' is a string that is presented to the user.
+    'default' is the presumed answer if the user just hits <Enter>.
+        It must be 'yes' (the default), 'no' or None (meaning
+        an answer is required of the user).
+
+    The 'answer' return value is True for 'yes' or False for 'no'.
+    """
+    valid = {'yes': True, 'y': True, 'ye': True,
+             'no': False, 'n': False}
+    if default is None:
+        prompt = ' [y/n] '
+    elif default == 'yes':
+        prompt = ' [Y/n] '
+    elif default == 'no':
+        prompt = ' [y/N] '
+    else:
+        raise ValueError('invalid default answer: "%s"' % default)
+
+    while True:
+        print(question + prompt)
+        choice = input().lower()
+        if default is not None and choice == '':
+            return valid[default]
+        elif choice in valid:
+            return valid[choice]
+        else:
+            print('Please respond with "yes" or "no" (or "y" or "n").')
+
 class ScalrApiClient(object):
     def __init__(self, api_url, key_id, key_secret):
         self.api_url = api_url
@@ -203,20 +234,31 @@ def process_step(step, client, outputs, outputs_file_name):
         logging.info('Would have queried: %s body: %s', full_url, body)
         return True     # Success
 
-    if action['method'] == 'list':
-        data = client.list(full_url)
-        if len(data) != 1:
-            logging.error('List operation in step %s returned %d results (expected 1)', step['id'], len(data))
-            return False
-        data = data[0]
-    elif action['method'] == 'post':
-        data = client.post(full_url, json=body)
+    try:
+        if action['method'] == 'list':
+            data = client.list(full_url)
+            if len(data) != 1:
+                logging.error('List operation in step %s returned %d results (expected 1)', step['id'], len(data))
+                return False
+            data = data[0]
+        elif action['method'] == 'post':
+            data = client.post(full_url, json=body)
 
-    save_outputs(step, data, outputs)
-    outputs[step['id']]['complete'] = True
-    # Save the outputs after each successful step so that we don't lose any info (but don't do it on dry runs)
-    save_outputs_to_file(outputs, outputs_file_name)
-    return True
+        save_outputs(step, data, outputs)
+        outputs[step['id']]['complete'] = True
+        # Save the outputs after each successful step so that we don't lose any info (but don't do it on dry runs)
+        save_outputs_to_file(outputs, outputs_file_name)
+        return True
+
+    except:
+        # Special case for server imports, allow to continue even if it fails
+        if step['action'] == 'import-server':
+            if not query_yes_no('Error importing server. Continue anyway?', 'no'):
+                raise
+            else:
+                return True
+        else:
+            raise
 
 
 def process_plan(plan, client, outputs_file_name):
