@@ -8,10 +8,9 @@ The script saves its progress after each successful step - so it is safe to run 
 ### Usage
 
 ```
-python3 bulk_import.py -u <scalr URL> -k <API Key> -s <API Key secret> -p <Plan file to execute> [-z]
+python3 bulk_import.py -u <scalr URL> -k <API Key> -s <API Key secret> -p <Plan file to execute>
 ```
 
-The `-z` flag is optional and is used to perform a dry run. No servers will get imported if it is set.
 
 
 
