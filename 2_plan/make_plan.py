@@ -13,6 +13,25 @@ def make_step_id():
 make_step_id.counter = 0
 
 
+def project_find_step(project_name, env_id):
+    return {
+        'id': make_step_id(),
+        'action': 'find-project',
+        'params': {
+            'envId': str(env_id),
+        },
+        'query': {
+            'name': project_name,
+        },
+        'outputs': [
+            {
+                'name': 'projectid',
+                'location': 'id'
+            }
+        ]
+    }
+
+
 def farm_find_step(farm_name, env_id):
     return {
         'id': make_step_id(),
@@ -77,8 +96,8 @@ def farm_launch_step(parent_farm_step_id, env_id):
     }
 
 
-def farm_create_step(farm_name, project_id, env_id):
-    return {
+def farm_create_step(farm_name, env_id, project_id=None, project_step_id=None):
+    step = {
         'id': make_step_id(),
         'action': 'create-farm',
         'params': {
@@ -87,7 +106,7 @@ def farm_create_step(farm_name, project_id, env_id):
         'body': {
             'name': farm_name,
             'project': {
-                'id': project_id
+                'id': ''
             }
         },
         'outputs': [
@@ -97,6 +116,11 @@ def farm_create_step(farm_name, project_id, env_id):
             }
         ]
     }
+    if project_id:
+        step['body']['project']['id'] = project_id
+    elif project_step_id:
+        step['body']['project']['id'] = '$ref/{}/projectid'.format(project_step_id)
+    return step
 
 
 def farm_role_create_step(parent_farm_step_id, env_id, alias, cloud_platform,
@@ -173,7 +197,7 @@ def check_line_farm_role(line, farm_role):
 
 def make_farms(data):
     # farm name is a position 1, project ID is at position 9
-    # We want to check that the same project is specifiec for all servers in one farm...
+    # We want to check that the same project is specified for all servers in one farm...
     farms = {} # name -> project mapping
     for i, line in enumerate(data):
         farm_name = line[1]
@@ -199,11 +223,12 @@ def check_farm_role(structure):
         raise ValueError
 
 
-def make_farms_and_roles_plan(data, envId):
+def make_farms_and_roles_plan(data, envId, use_project_names=False):
     """ Required data format:
     server id, farm name, farm role alias, region, instance type, VPC id, subnet, role id, security groups (space separated), project id
     """
     farms = make_farms(data)
+    projects = {p: None for p in set(farms.values())}
     farm_names = set([l[1] for l in data])
     farm_roles = {f:{} for f in farm_names}
     # Gather required data for each farm role, and make sure that the provided data is consistent...
@@ -218,10 +243,21 @@ def make_farms_and_roles_plan(data, envId):
             farm_roles[farm_name][farm_role_name] = check_line_farm_role(line, farm_roles[farm_name][farm_role_name])
 
     steps = []
+    # 0: fetch projects
+    if use_project_names:
+        for project_name in projects:
+            # Record the step id in projects
+            step = project_find_step(project_name, envId)
+            projects[project_name] = step['id']
+            steps.append(step)
+
     # 1: create farms
     farms_step_ids = {} # key = farm, value = id of the step that retrieves this farm
     for farm_name, project in farms.items():
-        step = farm_create_step(farm_name, project, envId)
+        if use_project_names:
+            step = farm_create_step(farm_name, envId, project_step_id=projects[project])
+        else:
+            step = farm_create_step(farm_name, envId, project_id=project)
         farms_step_ids[farm_name] = step['id']
         steps.append(step)
 
@@ -286,7 +322,7 @@ def main(args):
     with open(args.source, newline='') as source_file:
         reader = csv.reader(source_file)
         data = [l for l in reader]
-    setup_plan = make_farms_and_roles_plan(data, args.environment)
+    setup_plan = make_farms_and_roles_plan(data, args.environment, args.project_names)
     print('Created setup plan with {} steps.'.format(len(setup_plan)))
     write_plan(setup_plan, args.output + '.setup.yml')
     import_plan = make_simple_plan(data, args.environment)
@@ -299,4 +335,5 @@ if __name__ == '__main__':
     parser.add_argument('--source', '-s', help='Source CSV file')
     parser.add_argument('--environment', '-e', help='Environment this import plan is for')
     parser.add_argument('--output', '-o', help='File to write the plan to (MUST NOT exist)')
+    parser.add_argument('--project-names', '-p', help='Treat column 10 of source CSV as project names and not IDs', action='store_true')
     main(parser.parse_args())

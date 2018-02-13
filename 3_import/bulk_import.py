@@ -32,6 +32,11 @@ actions = {
         'method': 'list',
         'url': '/api/v1beta0/user/{envId}/farms/{farmId}/farm-roles/'
     },
+    'find-project': {
+        'skip-on-dry-run': False,
+        'method': 'list',
+        'url': '/api/v1beta0/user/{envId}/projects/'
+    },
     'import-server': {
         'skip-on-dry-run': True,
         'method': 'post',
@@ -85,6 +90,7 @@ def query_yes_no(question, default='yes'):
             return valid[choice]
         else:
             print('Please respond with "yes" or "no" (or "y" or "n").')
+
 
 class ScalrApiClient(object):
     def __init__(self, api_url, key_id, key_secret):
