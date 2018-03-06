@@ -9,6 +9,11 @@ pip3 install -r ../requirements.txt
 python3 make_plan.py -s <source CSV file> -e < ID of the environment to import in> -o <output file name>
 ```
 
+*** If the project name is used instead of the project ID, add a -p at the end of the command:
+```
+python3 make_plan.py -s <source CSV file> -e < ID of the environment to import in> -o <output file name> -p
+```
+
 The csv file must have the following format:
 ```
 server id, farm name, farm role alias, region, instance type, VPC id, subnet, role id, security groups (space separated), project id
