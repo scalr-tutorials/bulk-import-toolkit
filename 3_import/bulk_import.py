@@ -240,43 +240,45 @@ def process_step(step, client, outputs, outputs_file_name):
         logging.info('Would have queried: %s body: %s', full_url, body)
         return True     # Success
 
-    try:
-        if action['method'] == 'list':
-            data = client.list(full_url)
-            if len(data) != 1:
-                logging.error('List operation in step %s returned %d results (expected 1)', step['id'], len(data))
-                return False
-            data = data[0]
-        elif action['method'] == 'post':
-            try:
-                data = client.post(full_url, json=body)
-            except:
-                if step['action'] == 'create-farm':
-                    name = body['name'].replace(" ", "%20")
-                    data1 = client.list(full_url + 'name=' + name)
-                elif step['action'] == 'create-farm-role':
-                    alias = body['alias'].replace(" ", "%20")
-                    data1 = client.list(full_url + 'alias=' + alias)
+    # try:
+    if action['method'] == 'list':
+        logging.info('1--=-=-=-=-=---')
+        data = client.list(full_url)
+        if len(data) != 1:
+            logging.error('List operation in step %s returned %d results (expected 1)', step['id'], len(data))
+            return False
+        data = data[0]
+    elif action['method'] == 'post':
+        try:
+            data = client.post(full_url, json=body)
+        except:
+            if step['action'] == 'create-farm':
+                name = body['name'].replace(" ", "%20")
+                data1 = client.list(full_url + 'name=' + name)
+            elif step['action'] == 'create-farm-role':
+                alias = body['alias'].replace(" ", "%20")
+                data1 = client.list(full_url + 'alias=' + alias)
+            elif step['action'] == 'import-server':
+                server_id = body['cloudServerId']
+                data1 = client.list(full_url.replace('actions/import-server', 'servers') + 'cloudServerId=' + server_id)
 
-                data = data1[0]
+            data = data1[0]
 
-        save_outputs(step, data, outputs)
-        outputs[step['id']]['complete'] = True
-        # Save the outputs after each successful step so that we don't lose any info (but don't do it on dry runs)
-        save_outputs_to_file(outputs, outputs_file_name)
-        return True
+    save_outputs(step, data, outputs)
+    outputs[step['id']]['complete'] = True
+    # Save the outputs after each successful step so that we don't lose any info (but don't do it on dry runs)
+    save_outputs_to_file(outputs, outputs_file_name)
+    return True
 
-    except:
-        # Special case for server imports, allow to continue even if it fails
-        if step['action'] == 'import-server':
-            server_url = '/api/v1beta0/user/{envId}/farm-roles/{farmRoleId}/servers/?'
-            # https://demo.scalr.com/api/v1beta0/user/53/farm-roles/3842/servers/?cloudServerId=i-09eed7d510712f885
-            if not query_yes_no('Error importing server. Continue anyway?', 'no'):
-                raise
-            else:
-                return True
-        else:
-            raise
+    # except:
+    #     # Special case for server imports, allow to continue even if it fails
+    #     if step['action'] == 'import-server':
+    #         if not query_yes_no('Error importing server. Continue anyway?', 'no'):
+    #             raise
+    #         else:
+    #             return True
+    #     else:
+    #         raise
 
 
 def process_plan(plan, client, outputs_file_name):
