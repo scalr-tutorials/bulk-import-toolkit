@@ -242,7 +242,6 @@ def process_step(step, client, outputs, outputs_file_name):
 
     # try:
     if action['method'] == 'list':
-        logging.info('1--=-=-=-=-=---')
         data = client.list(full_url)
         if len(data) != 1:
             logging.error('List operation in step %s returned %d results (expected 1)', step['id'], len(data))
@@ -253,10 +252,10 @@ def process_step(step, client, outputs, outputs_file_name):
             data = client.post(full_url, json=body)
         except:
             if step['action'] == 'create-farm':
-                name = body['name'].replace(" ", "%20")
+                name = urllib.parse.quote(body['name'])
                 data1 = client.list(full_url + 'name=' + name)
             elif step['action'] == 'create-farm-role':
-                alias = body['alias'].replace(" ", "%20")
+                alias = urllib.parse.quote(body['alias'])
                 data1 = client.list(full_url + 'alias=' + alias)
             elif step['action'] == 'import-server':
                 server_id = body['cloudServerId']
