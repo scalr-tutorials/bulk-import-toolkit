@@ -174,14 +174,14 @@ class ScalrApiSession(requests.Session):
     def request(self, *args, **kwargs):
         res = super(ScalrApiSession, self).request(*args, **kwargs)
         self.client.logger.info("%s - %s", " ".join(args), res.status_code)
-        try:
-            errors = res.json().get("errors", None)
-            if errors is not None:
-                for error in errors:
-                    self.client.logger.warning("API Error (%s): %s", error["code"], error["message"])
-        except ValueError:
-            self.client.logger.error("Received non-JSON response from API!")
-        res.raise_for_status()
+        # try:
+        #     errors = res.json().get("errors", None)
+        #     if errors is not None:
+        #         for error in errors:
+        #             self.client.logger.warning("API Error (%s): %s", error["code"], error["message"])
+        # except ValueError:
+        #     self.client.logger.error("Received non-JSON response from API!")
+        # res.raise_for_status()
         self.client.logger.debug("Received response: %s", res.text)
         return res
 
