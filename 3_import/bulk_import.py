@@ -174,14 +174,14 @@ class ScalrApiSession(requests.Session):
     def request(self, *args, **kwargs):
         res = super(ScalrApiSession, self).request(*args, **kwargs)
         self.client.logger.info("%s - %s", " ".join(args), res.status_code)
-        try:
-            errors = res.json().get("errors", None)
-            if errors is not None:
-                for error in errors:
-                    self.client.logger.warning("API Error (%s): %s", error["code"], error["message"])
-        except ValueError:
-            self.client.logger.error("Received non-JSON response from API!")
-        res.raise_for_status()
+        # try:
+        #     errors = res.json().get("errors", None)
+        #     if errors is not None:
+        #         for error in errors:
+        #             self.client.logger.warning("API Error (%s): %s", error["code"], error["message"])
+        # except ValueError:
+        #     self.client.logger.error("Received non-JSON response from API!")
+        # res.raise_for_status()
         self.client.logger.debug("Received response: %s", res.text)
         return res
 
@@ -240,31 +240,44 @@ def process_step(step, client, outputs, outputs_file_name):
         logging.info('Would have queried: %s body: %s', full_url, body)
         return True     # Success
 
-    try:
-        if action['method'] == 'list':
-            data = client.list(full_url)
-            if len(data) != 1:
-                logging.error('List operation in step %s returned %d results (expected 1)', step['id'], len(data))
-                return False
-            data = data[0]
-        elif action['method'] == 'post':
+    # try:
+    if action['method'] == 'list':
+        data = client.list(full_url)
+        if len(data) != 1:
+            logging.error('List operation in step %s returned %d results (expected 1)', step['id'], len(data))
+            return False
+        data = data[0]
+    elif action['method'] == 'post':
+        try:
             data = client.post(full_url, json=body)
+        except:
+            if step['action'] == 'create-farm':
+                name = urllib.parse.quote(body['name'])
+                data1 = client.list(full_url + 'name=' + name)
+            elif step['action'] == 'create-farm-role':
+                alias = urllib.parse.quote(body['alias'])
+                data1 = client.list(full_url + 'alias=' + alias)
+            elif step['action'] == 'import-server':
+                server_id = body['cloudServerId']
+                data1 = client.list(full_url.replace('actions/import-server', 'servers') + 'cloudServerId=' + server_id)
 
-        save_outputs(step, data, outputs)
-        outputs[step['id']]['complete'] = True
-        # Save the outputs after each successful step so that we don't lose any info (but don't do it on dry runs)
-        save_outputs_to_file(outputs, outputs_file_name)
-        return True
+            data = data1[0]
 
-    except:
-        # Special case for server imports, allow to continue even if it fails
-        if step['action'] == 'import-server':
-            if not query_yes_no('Error importing server. Continue anyway?', 'no'):
-                raise
-            else:
-                return True
-        else:
-            raise
+    save_outputs(step, data, outputs)
+    outputs[step['id']]['complete'] = True
+    # Save the outputs after each successful step so that we don't lose any info (but don't do it on dry runs)
+    save_outputs_to_file(outputs, outputs_file_name)
+    return True
+
+    # except:
+    #     # Special case for server imports, allow to continue even if it fails
+    #     if step['action'] == 'import-server':
+    #         if not query_yes_no('Error importing server. Continue anyway?', 'no'):
+    #             raise
+    #         else:
+    #             return True
+    #     else:
+    #         raise
 
 
 def process_plan(plan, client, outputs_file_name):
@@ -320,7 +333,6 @@ if __name__ == '__main__':
     parser.add_argument('--key', '-k', help='API key ID')
     parser.add_argument('--secret', '-s', help='API key secret')
     parser.add_argument('--plan', '-p', help='Import plan')
-    parser.add_argument('--dry-run', '-z', action='store_true', default=False, 
+    parser.add_argument('--dry-run', '-z', action='store_true', default=False,
         help='Dry run, go through the import plan without actually importing any servers')
     main(parser.parse_args())
-

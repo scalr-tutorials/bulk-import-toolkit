@@ -1,4 +1,4 @@
 *.yml
 *.yml.status
 __pycache__
-
+*.csv
