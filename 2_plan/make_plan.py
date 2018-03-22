@@ -174,15 +174,6 @@ def farm_role_from_line(line):
     }
 
 
-def check_line_farm_role(line, farm_role):
-    """ Checks a new line against a previously defined farm role
-    Adds the subnet of this line to the farm role if necessary
-    """
-    if line[6] not in farm_role['subnets']:
-        farm_role['subnets'].append(line[6])
-    return farm_role
-
-
 def make_farms(data):
     # farm name is a position 1, project ID is at position 9
     # We want to check that the same project is specified for all servers in one farm...
@@ -227,8 +218,6 @@ def make_farms_and_roles_plan(data, envId, use_project_names=False):
             farm_role_structure = farm_role_from_line(line)
             farm_roles[farm_name][farm_role_name] = farm_role_structure
             check_farm_role(farm_role_structure)
-        else:
-            farm_roles[farm_name][farm_role_name] = check_line_farm_role(line, farm_roles[farm_name][farm_role_name])
 
     steps = []
     # 0: fetch projects
