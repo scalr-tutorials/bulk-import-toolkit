@@ -175,21 +175,9 @@ def farm_role_from_line(line):
 
 
 def check_line_farm_role(line, farm_role):
-    """ Checks a new line with a previsouly defined farm role
-    Returns the new farm role in case of success (with new subnets potentially)
-    Raises an exception on error
+    """ Checks a new line against a previously defined farm role
+    Adds the subnet of this line to the farm role if necessary
     """
-    for position, key in [(3, 'cloud_location'), (4, 'instance_type'), (5, 'network_id'), (7, 'role_id')]:
-        if line[position] != farm_role[key]:
-            print('ERROR: settings for instance {} contradict previous settings. {} was previously defined as {}, is now {}.'.format(
-                line[0], key, farm_role[key], line[position]))
-            raise ValueError
-    # Check security groups
-    if line[8].split() != farm_role['security_groups']:
-        print('ERROR: settings for instance {} contradict previous settings. Security groups were previously defined as {}, now {}.'.format(
-            line[0], farm_role['security_groups'], line[8]))
-        raise ValueError
-    # Add subnet if necessary
     if line[6] not in farm_role['subnets']:
         farm_role['subnets'].append(line[6])
     return farm_role
