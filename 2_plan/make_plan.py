@@ -3,8 +3,10 @@
 
 import argparse
 import csv
-import re
 import yaml
+
+from platforms import ec2
+from platforms import vmware
 
 
 def make_step_id():
@@ -123,60 +125,15 @@ def farm_create_step(farm_name, env_id, project_id=None, project_step_id=None):
     return step
 
 
-def farm_role_create_step(parent_farm_step_id, env_id, alias, cloud_platform,
-                          cloud_location, instance_type, network_id,
-                          subnets, role_id, security_groups):
-    return {
-        'id': make_step_id(),
-        'action': 'create-farm-role',
-        'params': {
-            'envId': env_id,
-            'farmId': '$ref/{}/farmid'.format(parent_farm_step_id)
-        },
-        'body': {
-            'alias': alias,
-            'cloudPlatform': cloud_platform,
-            'cloudLocation': cloud_location,
-            'instanceType': {
-                'id': instance_type
-            },
-            'networking': {
-                'networks': [{
-                    'id': network_id
-                }],
-                'subnets': [{'id': subnet_id} for subnet_id in subnets],
-            },
-            'role': {
-                'id': role_id
-            },
-            'security': {
-                'securityGroups': [{'id': sg_id} for sg_id in security_groups]
-            }
-        },
-        'outputs': [
-            {
-                'name': 'farmroleid',
-                'location': 'id'
-            }
-        ]
-    }
-
-
-def farm_role_from_line(line):
-    return {
-        'alias': line[2],
-        'cloud_location': line[3],
-        'instance_type': line[4],
-        'network_id': line[5],
-        'subnets': [line[6]],
-        'role_id': line[7],
-        'security_groups': line[8].split()
-    }
-
-
 def make_farms(data):
-    # farm name is a position 1, project ID is at position 9
-    # We want to check that the same project is specified for all servers in one farm...
+    """
+    Creates a dict of farm names => project (name or ID) from data
+
+    Assumes that farm name is a position 1, project is at position 9
+    Note: This means we need to have this structure for all platforms. Not a problem so far...
+    We can move this function to the platform specific files if it becomes one
+    We also check that the same project is specified for all servers in one farm
+    """
     farms = {} # name -> project mapping
     for i, line in enumerate(data):
         farm_name = line[1]
@@ -191,20 +148,14 @@ def make_farms(data):
     return farms
 
 
-def check_farm_role(structure):
-    # Check alias
-    if not re.match('^[a-zA-Z\d][a-zA-Z\d\-]*[a-zA-Z\d]$', structure['alias']):
-        print('ERROR: invalid farm role alias: {}. Must contain only letters, numbers and dashes'.format(structure['alias']))
-        raise ValueError
-    # Check SG list is not empty
-    if len(structure['security_groups']) == 0:
-        print('ERROR: In farm role {} empty security groups list is not allowed.'.format(structure['alias']))
-        raise ValueError
-
-
-def make_farms_and_roles_plan(data, envId, use_project_names=False):
-    """ Required data format:
-    server id, farm name, farm role alias, region, instance type, VPC id, subnet, role id, security groups (space separated), project id
+def make_farms_and_roles_plan(platform, data, envId, use_project_names=False):
+    """ Required data format depends on the platform
+    We require these fields to be common for all platforms:
+        index -> field
+        0 -> server ID
+        1 -> farm name
+        2 -> farm role alias
+        9 -> project ID or name
     """
     farms = make_farms(data)
     projects = {p: None for p in set(farms.values())}
@@ -215,9 +166,9 @@ def make_farms_and_roles_plan(data, envId, use_project_names=False):
         farm_name = line[1]
         farm_role_name = line[2]
         if farm_role_name not in farm_roles[farm_name]:
-            farm_role_structure = farm_role_from_line(line)
+            farm_role_structure = platform.farm_role_from_line(line)
             farm_roles[farm_name][farm_role_name] = farm_role_structure
-            check_farm_role(farm_role_structure)
+            platform.check_farm_role(farm_role_structure)
 
     steps = []
     # 0: fetch projects
@@ -242,7 +193,8 @@ def make_farms_and_roles_plan(data, envId, use_project_names=False):
     farm_roles_step_ids = {} # key = (farm, farm role) pair, value = id of the step the retrieves the farm role
     for farm_name in farm_roles:
         for farm_role_alias, farm_role_structure in farm_roles[farm_name].items():
-            step = farm_role_create_step(farms_step_ids[farm_name], envId, cloud_platform='ec2', **farm_role_structure)
+            step = platform.farm_role_create_step(farms_step_ids[farm_name], envId, 
+                                                  step_id=make_step_id(), **farm_role_structure)
             farm_roles_step_ids[(farm_name, farm_role_alias)] = step['id']
             steps.append(step)
 
@@ -254,7 +206,7 @@ def make_farms_and_roles_plan(data, envId, use_project_names=False):
     return steps
 
 
-def make_simple_plan(data, envId):
+def make_simple_plan(platform, data, envId):
     # Assumption: col 1 is server ID, col 2 is farm name, col 3 is farm role alias
     farms = set([l[1] for l in data])
     farm_roles = {} # farm name -> list of farm role aliases
@@ -299,18 +251,23 @@ def main(args):
     with open(args.source, newline='') as source_file:
         reader = csv.reader(source_file)
         data = [l for l in reader]
-    setup_plan = make_farms_and_roles_plan(data, args.environment, args.project_names)
+    if args.platform == 'ec2':
+        platform = ec2
+    elif args.platform == 'vmware':
+        platform = vmware
+    setup_plan = make_farms_and_roles_plan(platform, data, args.environment, args.project_names)
     print('Created setup plan with {} steps.'.format(len(setup_plan)))
     write_plan(setup_plan, args.output + '.setup.yml')
-    import_plan = make_simple_plan(data, args.environment)
+    import_plan = make_simple_plan(platform, data, args.environment)
     print('Created import plan with {} steps.'.format(len(import_plan)))
     write_plan(import_plan, args.output + '.import.yml')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--source', '-s', help='Source CSV file')
-    parser.add_argument('--environment', '-e', help='Environment this import plan is for')
-    parser.add_argument('--output', '-o', help='File to write the plan to (MUST NOT exist)')
-    parser.add_argument('--project-names', '-p', help='Treat column 10 of source CSV as project names and not IDs', action='store_true')
+    parser.add_argument('--source', '-s', help='Source CSV file', required=True)
+    parser.add_argument('--environment', '-e', help='Environment this import plan is for', required=True)
+    parser.add_argument('--output', '-o', help='File to write the plan to (MUST NOT exist)', required=True)
+    parser.add_argument('--project-names', '-p', help='Treat Project column in source CSV as project names and not IDs', action='store_true')
+    parser.add_argument('--platform', '-P', choices=['ec2', 'vmware'], help='Cloud platform to import servers from', required=True)
     main(parser.parse_args())
